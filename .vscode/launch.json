@@ -1,0 +1,38 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug: modbus_bridge.py",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/ros2_ws/src/industrial_cell/industrial_cell/modbus_bridge.py",
+      "console": "integratedTerminal",
+      "env": {
+        "PLC_HOST": "localhost",
+        "PLC_PORT": "502"
+      }
+    },
+    {
+      "name": "Debug: cell_supervisor.py",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/ros2_ws/src/industrial_cell/industrial_cell/cell_supervisor.py",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Debug: dashboard/app.py",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/dashboard/app.py",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Debug: tests",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["tests/", "-v"],
+      "console": "integratedTerminal"
+    }
+  ]
+}

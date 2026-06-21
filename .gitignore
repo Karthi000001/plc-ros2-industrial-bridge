@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+dist/
+*.pyd
+
+# ROS 2 build artifacts
+build/
+install/
+log/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+
+# Environment variables
+.env
+
+# Keep .vscode — it has shared team settings for this project

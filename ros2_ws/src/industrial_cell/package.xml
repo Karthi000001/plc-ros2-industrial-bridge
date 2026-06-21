@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" ?>
+<package format="3">
+  <name>industrial_cell</name>
+  <version>1.0.0</version>
+  <description>PLC-ROS2 industrial automation cell integration bridge with ML anomaly detection</description>
+  <maintainer email="your@email.com">Karthikeyan Raja</maintainer>
+  <license>MIT</license>
+
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+
+  <build_type>ament_python</build_type>
+</package>

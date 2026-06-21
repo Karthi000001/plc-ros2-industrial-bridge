@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Industrial Cell Monitor — PLC-ROS2</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      border-bottom: 1px solid #21262d;
+      padding-bottom: 16px;
+    }
+
+    header h1 { font-size: 1.2rem; color: #58a6ff; }
+    #timestamp { font-size: 0.75rem; color: #6e7681; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .card h3 {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #6e7681;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+
+    .value {
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .sub { font-size: 0.75rem; color: #6e7681; margin-top: 6px; }
+
+    .ok    { color: #3fb950; }
+    .warn  { color: #d29922; }
+    .fault { color: #f85149; }
+    .idle  { color: #6e7681; }
+    .info  { color: #58a6ff; }
+
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #6e7681;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+
+    #arch {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 8px;
+      padding: 20px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.72rem;
+      color: #8b949e;
+      line-height: 1.7;
+      white-space: pre;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>PLC–ROS 2 Industrial Cell Monitor</h1>
+    <span id="timestamp">–</span>
+  </header>
+
+  <p class="section-title">Cell Status (from PLC via Modbus TCP)</p>
+  <div class="grid">
+    <div class="card">
+      <h3>Belt Motor</h3>
+      <div class="value" id="belt">–</div>
+      <div class="sub">Coil 0 — belt_running</div>
+    </div>
+    <div class="card">
+      <h3>Part Sensor</h3>
+      <div class="value" id="part">–</div>
+      <div class="sub">Coil 1 — part_detected</div>
+    </div>
+    <div class="card">
+      <h3>Gripper</h3>
+      <div class="value" id="grip">–</div>
+      <div class="sub">Coil 2 — gripper_active</div>
+    </div>
+    <div class="card">
+      <h3>Cycle Count</h3>
+      <div class="value info" id="cyc">–</div>
+      <div class="sub">Register 0 — cycle_count</div>
+    </div>
+    <div class="card">
+      <h3>Fault Latch</h3>
+      <div class="value" id="flatch">–</div>
+      <div class="sub">Coil 3 — fault_latch</div>
+    </div>
+    <div class="card">
+      <h3>Sensor Analog</h3>
+      <div class="value info" id="analog">–</div>
+      <div class="sub">Register 1 — sensor_analog</div>
+    </div>
+  </div>
+
+  <p class="section-title" style="margin-top:8px">AI Supervisor Status (ROS 2 — IsolationForest)</p>
+  <div class="grid">
+    <div class="card">
+      <h3>Supervisor State</h3>
+      <div class="value" id="supstate">–</div>
+      <div class="sub" id="suprog">–</div>
+    </div>
+    <div class="card">
+      <h3>Consecutive Anomalies</h3>
+      <div class="value" id="anom">–</div>
+      <div class="sub">Threshold: 3 → E-STOP</div>
+    </div>
+    <div class="card">
+      <h3>Readings Processed</h3>
+      <div class="value info" id="proc">–</div>
+      <div class="sub">Since startup</div>
+    </div>
+  </div>
+
+  <p class="section-title" style="margin-top:24px">System Architecture</p>
+  <div id="arch">PLC (OpenPLC :502 Modbus TCP)
+  Coil 0  belt_running  ──► ROS2 /cell_state topic
+  Coil 1  part_detected ──► ROS2 /cell_state topic
+  Coil 2  gripper_active──► ROS2 /cell_state topic
+  Coil 3  fault_latch   ──► ROS2 /cell_state topic
+  Reg  0  cycle_count   ──► ROS2 /cell_state topic
+  Reg  1  sensor_analog ──► ROS2 /cell_state topic
+  Coil 100 e_stop_cmd   ◄── ROS2 /plc_commands topic
+  Coil 101 reset_cmd    ◄── ROS2 /plc_commands topic
+
+ROS2 Nodes
+  modbus_bridge   ── polls PLC @ 10Hz ── publishes /cell_state
+  cell_supervisor ── subscribes /cell_state ── IsolationForest ── publishes /plc_commands + /supervisor_status
+
+Flask Dashboard (this page)
+  GET  /api/state   ── returns combined JSON
+  POST /api/update  ── receives pushes from ROS2 nodes</div>
+
+  <script>
+    async function refresh() {
+      try {
+        const r = await fetch('/api/state');
+        const d = await r.json();
+        const c = d.cell, s = d.supervisor;
+
+        const set = (id, text, cls) => {
+          const el = document.getElementById(id);
+          el.textContent = text;
+          el.className = 'value ' + (cls || '');
+        };
+
+        set('belt',   c.belt_running   ? 'RUNNING'  : 'STOPPED',  c.belt_running   ? 'ok'   : 'warn');
+        set('part',   c.part_detected  ? 'DETECTED' : 'CLEAR',    c.part_detected  ? 'ok'   : 'idle');
+        set('grip',   c.gripper_active ? 'CLAMPED'  : 'OPEN',     c.gripper_active ? 'warn' : 'ok');
+        set('cyc',    c.cycle_count,  'info');
+        set('flatch', c.fault_latch   ? 'FAULT'    : 'OK',        c.fault_latch    ? 'fault': 'ok');
+        set('analog', c.sensor_analog, 'info');
+
+        const scls = s.supervisor_state === 'MONITORING' ? 'ok'
+                   : s.supervisor_state === 'FAULT'      ? 'fault' : 'warn';
+        set('supstate', s.supervisor_state, scls);
+
+        document.getElementById('suprog').textContent =
+          s.supervisor_state === 'TRAINING'
+            ? `Collecting: ${s.training_progress} / ${s.training_target}`
+            : `Model trained on ${s.training_target} baseline samples`;
+
+        const acls = s.consec_anomalies >= 3 ? 'fault'
+                   : s.consec_anomalies >= 1 ? 'warn' : 'ok';
+        set('anom', s.consec_anomalies, acls);
+        set('proc', s.total_processed, 'info');
+
+        document.getElementById('timestamp').textContent =
+          'Last update: ' + new Date().toLocaleTimeString();
+
+      } catch (e) {
+        document.getElementById('timestamp').textContent = 'Connection error — retrying ...';
+      }
+    }
+
+    // Poll every 2 seconds
+    refresh();
+    setInterval(refresh, 2000);
+  </script>
+
+</body>
+</html>

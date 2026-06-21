@@ -1,0 +1,21 @@
+{
+  "python.defaultInterpreterPath": "/usr/bin/python3",
+  "python.analysis.extraPaths": [
+    "./ros2_ws/install/industrial_cell/lib/python3.10/site-packages"
+  ],
+  "editor.formatOnSave": true,
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "files.trimTrailingWhitespace": true,
+  "files.associations": {
+    "*.st": "plaintext",
+    "*.launch.py": "python",
+    "package.xml": "xml"
+  },
+  "terminal.integrated.env.linux": {
+    "ROS_DISTRO": "humble"
+  },
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.autopep8"
+  }
+}

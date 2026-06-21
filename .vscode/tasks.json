@@ -1,0 +1,89 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "1. Docker: Build & Start All",
+      "type": "shell",
+      "command": "docker compose up --build",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "2. Docker: Stop All",
+      "type": "shell",
+      "command": "docker compose down",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "3. Docker: View Logs (bridge)",
+      "type": "shell",
+      "command": "docker compose logs -f ros2-bridge",
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "new" },
+      "problemMatcher": []
+    },
+    {
+      "label": "4. Docker: View Logs (openplc)",
+      "type": "shell",
+      "command": "docker compose logs -f openplc",
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "new" },
+      "problemMatcher": []
+    },
+    {
+      "label": "5. Git: Stage All & Commit",
+      "type": "shell",
+      "command": "git add . && git status",
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "6. Git: Push to Origin",
+      "type": "shell",
+      "command": "git push origin develop",
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "7. Install Python Dependencies Locally",
+      "type": "shell",
+      "command": "pip install -r requirements.txt",
+      "group": "none",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "8. Open OpenPLC Web IDE",
+      "type": "shell",
+      "command": "xdg-open http://localhost:8080 || open http://localhost:8080",
+      "group": "none",
+      "presentation": { "reveal": "silent", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "9. Open Dashboard",
+      "type": "shell",
+      "command": "xdg-open http://localhost:5000 || open http://localhost:5000",
+      "group": "none",
+      "presentation": { "reveal": "silent", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "10. Run Tests",
+      "type": "shell",
+      "command": "python -m pytest tests/ -v",
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    }
+  ]
+}

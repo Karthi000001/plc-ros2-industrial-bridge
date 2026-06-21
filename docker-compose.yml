@@ -1,0 +1,66 @@
+version: "3.8"
+
+# ── PLC-ROS2 Industrial Cell Bridge ──────────────────────────────────────────
+#
+# Services:
+#   openplc    — IEC 61131-3 PLC runtime + Modbus TCP server
+#   ros2-bridge — ROS 2 Modbus bridge + AI supervisor nodes
+#   dashboard  — Flask live status dashboard
+#
+# Startup order:
+#   openplc starts first → ros2-bridge waits for openplc health check
+#   dashboard starts in parallel (independent of PLC/ROS2)
+#
+# Usage:
+#   docker compose up --build       ← build images and start all services
+#   docker compose up               ← start without rebuilding
+#   docker compose down             ← stop and remove containers
+#   docker compose logs -f openplc  ← tail OpenPLC logs
+#   docker compose logs -f ros2-bridge ← tail ROS2 node logs
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  openplc:
+    build:
+      context: .
+      dockerfile: docker/openplc/Dockerfile
+    container_name: openplc
+    ports:
+      - "8080:8080"   # Web IDE  → open http://localhost:8080 in browser
+      - "502:502"     # Modbus TCP → Python bridge connects here
+    healthcheck:
+      # Consider OpenPLC healthy when its web server responds
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 15     # Allow up to 150 seconds for OpenPLC to initialise
+      start_period: 10s
+    restart: unless-stopped
+
+  ros2-bridge:
+    build:
+      context: .
+      dockerfile: docker/modbus-bridge/Dockerfile
+    container_name: ros2-bridge
+    depends_on:
+      openplc:
+        condition: service_healthy   # Wait until openplc passes health check
+    environment:
+      # PLC_HOST uses Docker service name — Docker DNS resolves it to container IP
+      - PLC_HOST=openplc
+      - PLC_PORT=502
+    stdin_open: true
+    tty: true         # Keep terminal open to see ROS 2 node output
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/dashboard/Dockerfile
+    container_name: dashboard
+    ports:
+      - "5000:5000"   # Dashboard → open http://localhost:5000 in browser
+    depends_on:
+      - ros2-bridge
+    restart: unless-stopped
